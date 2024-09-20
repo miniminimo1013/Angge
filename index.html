@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Submission</title>
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+    <div class="form">
+        <h3>College of Computer Studies Sub-Organization Form</h3>
+        <form id="dataForm">
+            <label for="studentName">Student Name:</label>
+            <input type="text" id="studentName" required>
+        
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+        
+            <label for="subOrg">CES Sub-Org:</label>
+            <select id="subOrg" required>
+                <option value="webArch">WebArchers</option>
+                <option value="CyberNet">CyberNetZ</option>
+                <option value="CodeWarrior">CodeSpartanz</option>
+                <option value="DigiWizard">DigiesWizard</option>
+            </select>
+            
+            <button type="submit">Submit</button>
+        </form>
+        <button id="downloadBtn">Download Data</button> <!-- Download button added -->
+    </div>
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>Data submitted successfully!</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAsxVacztbFz2obPvsAQMej1aI_BLxR6_4",
+            authDomain: "database-82e43.firebaseapp.com",
+            projectId: "database-82e43",
+            storageBucket: "database-82e43.appspot.com",
+            messagingSenderId: "1058603877513",
+            appId: "1:1058603877513:web:2893dad8b0fe128932f258",
+            measurementId: "G-E7R6J97YC6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const dataStore = []; // Array to store submitted data
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const dataForm = document.getElementById('dataForm');
+            const modal = document.getElementById("myModal");
+            const closeModal = document.getElementsByClassName("close")[0];
+            const downloadBtn = document.getElementById("downloadBtn");
+
+            dataForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                const studentName = document.getElementById('studentName').value;
+                const email = document.getElementById('email').value;
+                const subOrg = document.getElementById('subOrg').value;
+
+                // Push the data to the dataStore array
+                dataStore.push({ studentName, email, subOrg });
+
+                // Save to Firebase
+                set(ref(db, 'students/' + studentName), {
+                    studentName: studentName,
+                    email: email,
+                    subOrg: subOrg
+                }).then(() => {
+                    alert("Successfully Added !!");
+                    dataForm.reset(); // Reset the form after successful submission
+                }).catch((error) => {
+                    console.error("Error adding Data", error);
+                    alert("Error adding data: " + error.message);
+                });
+
+                // Display the modal
+                modal.style.display = "block";
+            });
+
+            closeModal.onclick = function() {
+                modal.style.display = "none";
+            };
+
+            window.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.style.display = "none";
+                }
+            };
+
+            downloadBtn.addEventListener('click', () => {
+                if (dataStore.length > 0) {
+                    downloadExcel(dataStore, 'students_data.xlsx');
+                } else {
+                    alert('No data to download.');
+                }
+            });
+        });
+
+        // Function to download data as Excel file
+        const downloadExcel = (data, filename) => {
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data");
+
+            // Generate buffer and save the file
+            XLSX.writeFile(wb, filename);
+        };
+    </script>
+</body>
+</html>
